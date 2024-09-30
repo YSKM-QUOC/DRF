@@ -1,0 +1,9 @@
+li a {
+    color: green;
+}
+body {
+    background: white url("images/kakaa.png") no-repeat;
+    background-size: 1900px 1080px; /* Đặt kích thước ảnh */
+    background-position: center;    /* Đặt vị trí ảnh ở giữa */
+    background-repeat: no-repeat;   /* Không lặp lại ảnh */
+}
