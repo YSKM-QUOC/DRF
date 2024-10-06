@@ -15,8 +15,17 @@ from rest_framework import generics
 from django.contrib.auth.models import User
 from snippets.serializers import UserSerializer
 from rest_framework import permissions
-# Create your views here.
+from rest_framework.reverse import reverse
+from rest_framework import renderers
+# Create your views 
+# here.
+class SnippetHighlight(generics.GenericAPIView):
+    queryset = Snippet.objects.all()
+    renderer_classes = [renderers.StaticHTMLRenderer]
 
+    def get(self, request, *args, **kwargs):
+        snippet = self.get_object()
+        return Response(snippet.highlighted)
 permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 class UserList(generics.ListAPIView):
     queryset = User.objects.all()
@@ -82,8 +91,32 @@ class SnippetDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'users': reverse('user-list', request=request, format=format),
+        'snippets': reverse('snippet-list', request=request, format=format)
+    })
+@api_view(['GET', 'POST'])
+def snippet_list(request, format=None):
+    """
+    List all code snippets, or create a new snippet.
+    """
+    if request.method == 'GET':
+        snippets = Snippet.objects.all()
+        serializer = SnippetSerializer(snippets, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        serializer = SnippetSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(owner=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['GET', 'PUT', 'DELETE'])
-def snippet_detail(request, pk):
+def snippet_detail(request, pk, format=None):
     """
     Retrieve, update or delete a code snippet.
     """
